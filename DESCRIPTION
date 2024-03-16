@@ -1,0 +1,8 @@
+Package: sentimentTextAnalyzer
+Title: Analyzes text for positive and negative sentiment
+Version: 0.1
+Authors@R: Kathryn Burkhart <burkhart14@usf.edu>
+Description: This package reads in text of various types such as URLs and flat text files and parses the text to reveal sentiment insights such as the frequency of negative and positive words and where they occurred in the text. When prompted, the package will generate word clouds of what words occurred the most in the text.
+Depends: R (>= 4.2.3)
+License: GPL-2
+LazyData: true 
