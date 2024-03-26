@@ -1,0 +1,39 @@
+---
+title: "Module 12 Final Project FAQ"
+author: "Kathryn Burkhart"
+date: "2024-03-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. What is sentimentTextAnalyzer?
+
+sentimentTextAnalyzer is an R package designed to analyze text data for positive and negative sentiment. It offers functions to parse text from various sources such as URLs and flat text files and extract sentiment insights.
+
+
+## 2. What can I use sentimentTextAnalyzer for?
+
+You can use sentimentTextAnalyzer to analyze text data from diverse sources, including customer feedback, social media posts, and product reviews. It helps identify positive and negative sentiment signals and generates word clouds highlighting frequently occurring words.
+
+## 3. How does sentimentTextAnalyzer work?
+
+sentimentTextAnalyzer utilizes natural language processing (NLP) techniques to preprocess and tokenize text data. It then identifies positive and negative sentiment words and calculates their frequency in the text. Additionally, the package can generate word clouds to visualize common words in the text data.
+
+## 4. Can I customize sentiment analysis parameters?
+
+Yes, sentimentTextAnalyzer provides options to customize sentiment analysis parameters based on your requirements. You can adjust parameters such as sentiment lexicons and word cloud generation settings.
+
+## 5. How can I access sentimentTextAnalyzer?
+
+sentimentTextAnalyzer is available for download from GitHub. You can install it by downloading the package directly from the GitHub repository.
+
+## 6. Can I contribute to sentimentTextAnalyzer?
+
+Yes, sentimentTextAnalyzer welcomes contributions from the community. You can contribute by reporting bugs, suggesting new features, or submitting pull requests on the GitHub repository.
+
+## 7. Is sentimentTextAnalyzer free to use?
+
+Yes, sentimentTextAnalyzer is an open-source project released under a permissive license. You can use it for free in your projects, whether for personal, academic, or commercial purposes.
