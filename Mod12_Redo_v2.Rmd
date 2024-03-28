@@ -1,0 +1,191 @@
+---
+title: "Module 12 - Main Function Design for sentimentTextAnalyzer"
+author: "Kathryn Burkhart"
+date: "2024-03-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Neccessary packages
+```{r}
+
+library(tm)
+library(XML)
+library(wordcloud2)
+
+```
+
+
+## Main Inputs
+
+The package will be able to read in a txt file, csv, or URL with .html or .htm file extension
+
+## Main Outputs
+
+Once the file has been preprocessed (made lowercase, punctuation removed, numbers removed, and common English stopwords removed), the package will provide the frequency of each word, filter frequency on positive and negative words, and generate a basic word cloud.
+
+## easyRead Function
+Reads in the file the user selected and preprocesses it to determine what type of file or URL it is. The function will prepare the text to then be cleaned through easyClean which is called within easyRead.
+
+```{r easyRead}
+
+easyRead <- function(file_path) {
+  # Check if the file path is a URL
+  if (startsWith(tolower(file_path), "http")) {
+    # Encode the URL
+    fileLocation <- URLencode(file_path)
+   
+    # Read and parse HTML file from URL
+    doc.html <- htmlTreeParse(fileLocation, useInternal = TRUE)
+   
+    # Extract all paragraphs and flatten to a character vector
+    doc.text <- unlist(xpathApply(doc.html, '//p', xmlValue))
+   
+    # Replace \n and \r with spaces
+    doc.text <- gsub('\\n|\\r', ' ', doc.text)
+  } else if (endsWith(tolower(file_path), ".csv")) {
+    # Read text data from CSV file
+    text <- read.csv(file_path, stringsAsFactors = FALSE)
+    text <- text[,1]  # Assuming the text is in the first column
+   
+    # Combine text if it's a vector
+    if (is.vector(text)) {
+      doc.text <- paste(text, collapse = " ")
+    }
+  } else {
+    # Read text data from plain text file
+    doc.text <- readLines(file_path, warn = FALSE)
+   
+    # Combine text if it's a vector
+    if (is.vector(doc.text)) {
+      doc.text <- paste(doc.text, collapse = " ")
+    }
+  }
+ 
+  # Preprocess text
+  cleaned_text <- easyClean(doc.text)
+ 
+  return(cleaned_text)
+}
+
+# Example usage:
+# cleaned_text <- easyRead("https://example.com/text.html")
+# cleaned_text <- easyRead("example.csv")
+# cleaned_text <- easyRead("example.txt")
+
+
+```
+
+## easyClean Function
+easyClean cleans the text data. It makes the text lowercase, removes numbers, removes punctuation, and removes common English stopwords. It will then create a TermDocumentMatrix. It's function is performed in easyRead to speed up the preprocessing.
+```{r easyClean}
+
+easyClean <- function(text) {
+  # Create Corpus from text vector
+  words.vec <- VectorSource(text)
+  words.corpus <- Corpus(words.vec)
+  
+  # Convert words to lowercase
+  words.corpus <- tm_map(words.corpus, content_transformer(tolower))
+  
+  # Remove Punctuation, Numbers, and stopwords
+  words.corpus <- tm_map(words.corpus, removePunctuation)
+  words.corpus <- tm_map(words.corpus, removeNumbers)
+  words.corpus <- tm_map(words.corpus, removeWords, stopwords("english"))
+  
+  # Create a TermDocumentMatrix
+  tdm <- TermDocumentMatrix(words.corpus)
+  
+  # Convert to matrix
+  word_matrix <- as.matrix(tdm)
+  
+  return(word_matrix)
+}
+```
+
+
+## easyFrequency Function
+This function gets the total frequency of words overall but also determines the frequency of positive and negative words found within the text. For now, the user will have to supply their own lexicon to get this function working properly. 
+
+```{r easyFrequency}
+
+easyFrequency <- function(word_matrix, pos_words, neg_words) {
+ 
+  # Get word frequencies
+  word_freq <- rowSums(word_matrix)
+ 
+  # Determine positive words frequency
+  matched_pos <- match(rownames(word_matrix), pos_words, nomatch = 0)
+  pos_counts <- word_freq[which(matched_pos != 0)]
+  n_pos <- sum(pos_counts)
+  
+  # Get positive words
+  pos_words_matched <- row.names(word_matrix)[which(matched_pos != 0)]
+ 
+  # Determine negative words frequency
+  matched_neg <- match(rownames(word_matrix), neg_words, nomatch = 0)
+  neg_counts <- word_freq[which(matched_neg != 0)]
+  n_neg <- sum(neg_counts)
+  
+  # Get negative words
+  neg_words_matched <- row.names(word_matrix)[which(matched_neg != 0)]
+ 
+  return(list(word_freq = word_freq, n_pos = n_pos, n_neg = n_neg, pos_words = pos_words_matched, pos_counts = pos_counts, neg_words = neg_words_matched, neg_counts = neg_counts))
+}
+
+```
+
+## easyWordCloud Function
+Now that the frequencies have been determined by the previous function, it's time to visualize the findings. Relying on the wordcloud2 package, all users need to do is enter the current iteration of their text data after it has been run through the easyFrequency function. At this time, users do need to convert the list output of easyFrequency into a dataframe but I hope to improve usability of the function so it does not require this extra step.
+
+```{r easyWordCloud}
+
+easyWordCloud <- function(freq_data, top_n = 50) {
+  # Convert frequency data to a data frame
+  #cloud_frame <- data.frame(word = names(freq_data), freq = freq_data)
+  cloud_frame <- as.data.frame(freq_data)
+  # Subset the data frame to the top n words
+  cloud_frame <- head(cloud_frame[order(-cloud_frame$freq), ], top_n)
+ 
+  # Generate word cloud
+  wordcloud2(data = cloud_frame, size = 1)
+}
+
+# Example Usage
+# freq_results <- calculate_word_frequency(cleaned_text, pos_words, neg_words)
+# generate_word_cloud(freq_results$word_freq)
+# generate_word_cloud(freq_results$n_pos)
+# generate_word_cloud(freq_results$n_neg)
+
+```
+## Testing
+Now in the testing phase, let's use the Susan B Anthony Speech which is a web url
+```{r}
+
+# easyRead test (note: in the function, it also runs easyClean, which goes through the whole cleaning procedure)
+cleanText <- easyRead("http://www.historyplace.com/speeches/anthony.htm")
+# This produces a ready-to-use matrix, so that one can begin analysis immediately
+
+# easyFrequency Function --------------------------------------------------------------
+
+# Input your lexicons (Bing)
+pos <- scan("C:/Users/ktbur/Documents/USF/Spring2024_ClassFolders/LIS4370_R_Programming/Week12/positive-words.txt", character(0), sep = "\n")
+neg <- scan("C:/Users/ktbur/Documents/USF/Spring2024_ClassFolders/LIS4370_R_Programming/Week12/negative-words.txt", character(0), sep = "\n")
+
+freqSBA <- easyFrequency(cleanText, pos, neg)
+
+freqSBA
+
+# easyWordCloud function testing
+
+# Step 1: place easyFrequency findings into a dataframe
+
+# Positive words
+positive.df <- data.frame(word = freqSBA$pos_words, freq = freqSBA$pos_counts, sentiment = "positive")
+
+easyWordCloud(positive.df)
+
+```
+
